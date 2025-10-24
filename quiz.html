@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Examen - Página <span id="paginaActual">1</span></title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="auto-save" id="autoSaveIndicator">
+        ✅ Progreso guardado
+    </div>
+
+    <!-- Lector de voz -->
+    <div class="lector-voz">
+        <button class="btn-lector" id="btnLeer" title="Leer en voz alta">
+            🔊
+        </button>
+        <div class="controles-lector" id="controlesLector">
+            <div class="control-velocidad">
+                <label for="velocidadLectura">Velocidad:</label>
+                <select id="velocidadLectura">
+                    <option value="0.5">Muy lenta</option>
+                    <option value="0.75">Lenta</option>
+                    <option value="1" selected>Normal</option>
+                    <option value="1.5">Rápida</option>
+                    <option value="2.0">Muy rápida</option>
+                    <option value="2.5">Ultra rápida</option>
+                    <option value="3.0">Máxima velocidad</option>
+                    <option value="3.5">Super velocidad</option>
+                    <option value="4.0">Hiper velocidad</option>
+                </select>
+            </div>
+            <div class="control-voz">
+                <label for="vozSeleccionada">Voz:</label>
+                <select id="vozSeleccionada"></select>
+            </div>
+            <button class="btn" id="btnDetener" style="width: 100%; margin-top: 10px; background-color: #6c757d;">
+                ⏹️ Detener
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Examen de Práctica</h1>
+        
+        <div class="progreso" id="progresoTexto">
+            Cargando...
+        </div>
+        
+        <div class="contador-preguntas" id="contadorPreguntas">
+            Preguntas: 0 de 0
+        </div>
+
+        <div class="usuario-info" style="text-align: center; margin-bottom: 20px; color: #666;">
+            Usuario: <strong id="nombreUsuario">-</strong> | 
+            <a href="#" id="logoutBtn" style="color: #dc3545; text-decoration: none;">Cerrar sesión</a>
+        </div>
+        
+        <div id="preguntasContainer">
+            <!-- Las preguntas se cargarán aquí dinámicamente -->
+        </div>
+        
+        <div class="navegacion">
+            <button type="button" id="btnAnterior" class="btn btn-anterior">
+                ← Anterior
+            </button>
+            
+            <button type="button" id="btnSiguiente" class="btn btn-siguiente">
+                Siguiente →
+            </button>
+            
+            <button type="button" id="btnFinalizar" class="btn btn-finalizar" style="display: none;">
+                Finalizar Examen
+            </button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Verificar autenticación al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('loggedIn') !== 'true') {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Mostrar nombre de usuario
+            const usuario = localStorage.getItem('usuario') || 'Usuario';
+            document.getElementById('nombreUsuario').textContent = usuario;
+
+            // Configurar logout
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.clear();
+                window.location.href = 'index.html';
+            });
+
+            // Inicializar el examen
+            if (typeof inicializarExamen === 'function') {
+                inicializarExamen();
+            } else {
+                console.error('La función inicializarExamen no está disponible');
+            }
+
+            // Actualizar visibilidad de botones
+            function actualizarBotonesNavegacion() {
+                const btnAnterior = document.getElementById('btnAnterior');
+                const btnSiguiente = document.getElementById('btnSiguiente');
+                const btnFinalizar = document.getElementById('btnFinalizar');
+
+                if (paginaActual === 1) {
+                    btnAnterior.style.visibility = 'hidden';
+                } else {
+                    btnAnterior.style.visibility = 'visible';
+                }
+
+                if (paginaActual < totalPaginas) {
+                    btnSiguiente.style.display = 'inline-block';
+                    btnFinalizar.style.display = 'none';
+                } else {
+                    btnSiguiente.style.display = 'none';
+                    btnFinalizar.style.display = 'inline-block';
+                }
+            }
+
+            // Sobrescribir funciones de navegación para incluir actualización de botones
+            const originalSiguiente = window.siguientePagina;
+            const originalAnterior = window.anteriorPagina;
+
+            window.siguientePagina = function() {
+                originalSiguiente();
+                actualizarBotonesNavegacion();
+            };
+
+            window.anteriorPagina = function() {
+                originalAnterior();
+                actualizarBotonesNavegacion();
+            };
+
+            // Inicializar botones
+            actualizarBotonesNavegacion();
+        });
+
+        // ========== LECTOR DE VOZ ==========
+        let synth = window.speechSynthesis;
+        let utterance = null;
+        let isReading = false;
+        let isPaused = false;
+        let currentTextIndex = 0;
+        let textElements = [];
+        let voices = [];
+
+        const btnLeer = document.getElementById('btnLeer');
+        const btnDetener = document.getElementById('btnDetener');
+        const controlesLector = document.getElementById('controlesLector');
+        const velocidadLectura = document.getElementById('velocidadLectura');
+        const vozSeleccionada = document.getElementById('vozSeleccionada');
+
+        function inicializarLector() {
+            const preguntas = document.querySelectorAll('.pregunta');
+            textElements = [];
+            
+            preguntas.forEach((pregunta, preguntaIndex) => {
+                const numeroPregunta = pregunta.querySelector('strong').textContent;
+                textElements.push({
+                    element: pregunta.querySelector('strong'),
+                    text: numeroPregunta,
+                    preguntaIndex: preguntaIndex,
+                    type: 'pregunta'
+                });
+                
+                const conector = pregunta.querySelector('em');
+                if (conector && conector.textContent.trim()) {
+                    textElements.push({
+                        element: conector,
+                        text: conector.textContent,
+                        preguntaIndex: preguntaIndex,
+                        type: 'conector'
+                    });
+                }
+                
+                const opciones = pregunta.querySelectorAll('.opcion label');
+                opciones.forEach(opcion => {
+                    textElements.push({
+                        element: opcion,
+                        text: opcion.textContent,
+                        preguntaIndex: preguntaIndex,
+                        type: 'opcion'
+                    });
+                });
+            });
+            
+            preguntas.forEach(pregunta => {
+                pregunta.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-pregunta-index'));
+                    iniciarLecturaDesdePregunta(index);
+                });
+            });
+            
+            cargarVoces();
+            
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = cargarVoces;
+            }
+        }
+
+        function cargarVoces() {
+            voices = synth.getVoices();
+            vozSeleccionada.innerHTML = '';
+            
+            const vocesEspanol = voices.filter(voice => 
+                voice.lang.includes('es') || voice.lang.includes('ES')
+            );
+            
+            const vocesDisponibles = vocesEspanol.length > 0 ? vocesEspanol : voices;
+            
+            vocesDisponibles.forEach((voice, i) => {
+                const option = document.createElement('option');
+                option.textContent = `${voice.name} (${voice.lang})`;
+                option.setAttribute('value', i);
+                vozSeleccionada.appendChild(option);
+            });
+            
+            if (vocesEspanol.length > 0) {
+                vozSeleccionada.value = voices.indexOf(vocesEspanol[0]);
+            }
+        }
+
+        function encontrarIndicePrimerElemento(preguntaIndex) {
+            for (let i = 0; i < textElements.length; i++) {
+                if (textElements[i].preguntaIndex === preguntaIndex) {
+                    return i;
+                }
+            }
+            return 0;
+        }
+
+        function iniciarLecturaDesdePregunta(preguntaIndex) {
+            document.querySelectorAll('.pregunta-seleccionada-lectura').forEach(el => {
+                el.classList.remove('pregunta-seleccionada-lectura');
+            });
+            
+            const preguntaElement = document.querySelector(`[data-pregunta-index="${preguntaIndex}"]`);
+            if (preguntaElement) {
+                preguntaElement.classList.add('pregunta-seleccionada-lectura');
+            }
+            
+            if (isReading) {
+                detenerLectura();
+            }
+            
+            const startFromQuestion = encontrarIndicePrimerElemento(preguntaIndex);
+            currentTextIndex = startFromQuestion;
+            iniciarLectura();
+        }
+
+        function leerTexto() {
+            if (currentTextIndex >= textElements.length) {
+                detenerLectura();
+                return;
+            }
+            
+            const currentText = textElements[currentTextIndex];
+            resaltarTexto(currentText.element);
+            
+            utterance = new SpeechSynthesisUtterance(currentText.text);
+            
+            const selectedVoiceIndex = parseInt(vozSeleccionada.value);
+            if (voices[selectedVoiceIndex]) {
+                utterance.voice = voices[selectedVoiceIndex];
+            }
+            
+            utterance.rate = parseFloat(velocidadLectura.value);
+            utterance.volume = 1;
+            utterance.pitch = 1;
+            
+            utterance.onend = function() {
+                if (!isPaused && isReading) {
+                    quitarResaltado(currentText.element);
+                    currentTextIndex++;
+                    leerTexto();
+                }
+            };
+            
+            utterance.onerror = function() {
+                if (!isPaused && isReading) {
+                    quitarResaltado(currentText.element);
+                    currentTextIndex++;
+                    leerTexto();
+                }
+            };
+            
+            synth.speak(utterance);
+        }
+
+        function toggleLectura() {
+            if (isReading) {
+                if (isPaused) {
+                    reanudarLectura();
+                } else {
+                    pausarLectura();
+                }
+            } else {
+                if (currentTextIndex >= textElements.length) {
+                    currentTextIndex = 0;
+                }
+                iniciarLectura();
+            }
+        }
+
+        function iniciarLectura() {
+            if (textElements.length === 0) {
+                inicializarLector();
+            }
+            
+            isReading = true;
+            isPaused = false;
+            btnLeer.classList.add('leyendo');
+            btnLeer.innerHTML = '⏸️';
+            btnLeer.title = 'Pausar lectura';
+            
+            leerTexto();
+        }
+
+        function pausarLectura() {
+            isPaused = true;
+            btnLeer.innerHTML = '▶️';
+            btnLeer.title = 'Reanudar lectura';
+            
+            if (synth.speaking) {
+                synth.pause();
+            }
+        }
+
+        function reanudarLectura() {
+            isPaused = false;
+            btnLeer.innerHTML = '⏸️';
+            btnLeer.title = 'Pausar lectura';
+            
+            if (synth.speaking) {
+                synth.resume();
+            } else {
+                leerTexto();
+            }
+        }
+
+        function detenerLectura() {
+            isReading = false;
+            isPaused = false;
+            btnLeer.classList.remove('leyendo');
+            btnLeer.innerHTML = '🔊';
+            btnLeer.title = 'Leer en voz alta';
+            
+            if (synth.speaking) {
+                synth.cancel();
+            }
+            
+            textElements.forEach(item => {
+                quitarResaltado(item.element);
+            });
+            
+            document.querySelectorAll('.pregunta-seleccionada-lectura').forEach(el => {
+                el.classList.remove('pregunta-seleccionada-lectura');
+            });
+        }
+
+        function resaltarTexto(element) {
+            element.classList.add('texto-resaltado');
+        }
+
+        function quitarResaltado(element) {
+            element.classList.remove('texto-resaltado');
+        }
+
+        btnLeer.addEventListener('click', function() {
+            toggleLectura();
+        });
+
+        btnDetener.addEventListener('click', function() {
+            detenerLectura();
+        });
+
+        btnLeer.addEventListener('mouseenter', function() {
+            controlesLector.classList.add('mostrar');
+        });
+
+        controlesLector.addEventListener('mouseleave', function() {
+            controlesLector.classList.remove('mostrar');
+        });
+
+        velocidadLectura.addEventListener('change', function() {
+            if (isReading && synth.speaking && !isPaused) {
+                const currentIndex = currentTextIndex;
+                detenerLectura();
+                currentTextIndex = currentIndex;
+                setTimeout(iniciarLectura, 100);
+            }
+        });
+
+        vozSeleccionada.addEventListener('change', function() {
+            if (isReading && synth.speaking && !isPaused) {
+                const currentIndex = currentTextIndex;
+                detenerLectura();
+                currentTextIndex = currentIndex;
+                setTimeout(iniciarLectura, 100);
+            }
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (isReading) {
+                detenerLectura();
+            }
+        });
+
+        // Reinicializar lector cuando se cargan nuevas preguntas
+        const originalMostrarPreguntas = window.mostrarPreguntas;
+        window.mostrarPreguntas = function() {
+            originalMostrarPreguntas();
+            setTimeout(inicializarLector, 100);
+        };
+    </script>
+</body>
+</html>

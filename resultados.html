@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultados del Examen</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Resultados del Examen</h1>
+        
+        <div id="resumenContainer" class="resumen">
+            Cargando resultados...
+        </div>
+        
+        <div id="puntajeContainer" class="puntaje">
+            Calculando puntaje...
+        </div>
+
+        <div class="btn-container">
+            <a href="index.html" class="volver-btn">Volver al Login</a>
+            <a href="quiz.html" class="volver-btn" style="background-color: #28a745;">Intentar de nuevo</a>
+            <button id="btnDescargar" class="volver-btn" style="background-color: #6f42c1;">📥 Descargar Resultados</button>
+        </div>
+        
+        <hr>
+        
+        <div id="resultadosContainer">
+            <!-- Los resultados se cargarán aquí -->
+        </div>
+        
+        <div class="btn-container">
+            <a href="index.html" class="volver-btn">Volver al Login</a>
+            <a href="quiz.html" class="volver-btn" style="background-color: #28a745;">Intentar de nuevo</a>
+            <button id="btnDescargarAbajo" class="volver-btn" style="background-color: #6f42c1;">📥 Descargar Resultados</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cargar resultados guardados
+            const resultadosGuardados = localStorage.getItem('resultadosExamen');
+            
+            if (!resultadosGuardados) {
+                document.getElementById('resumenContainer').innerHTML = 
+                    '<p style="color: red;">No se encontraron resultados. Por favor, realiza el examen primero.</p>';
+                return;
+            }
+
+            const datos = JSON.parse(resultadosGuardados);
+            const { resultados, puntaje, total, respondidas } = datos;
+
+            // Mostrar resumen
+            document.getElementById('resumenContainer').innerHTML = `
+                <strong>Preguntas respondidas: ${respondidas} / ${total}</strong><br>
+                <strong>Preguntas sin responder: ${total - respondidas}</strong>
+            `;
+
+            // Mostrar puntaje
+            const porcentaje = ((puntaje / total) * 100).toFixed(2);
+            document.getElementById('puntajeContainer').innerHTML = `
+                <strong>Puntaje obtenido: ${puntaje} / ${total}</strong>
+                <br>
+                <strong>Porcentaje: ${porcentaje}%</strong>
+                <br>
+                <div style="margin-top: 10px; font-size: 18px;">
+                    ${porcentaje >= 70 ? 
+                        '<span style="color: #28a745;">✅ ¡Aprobado!</span>' : 
+                        '<span style="color: #dc3545;">❌ Reprobado</span>'}
+                </div>
+            `;
+
+            // Mostrar resultados detallados
+            const resultadosContainer = document.getElementById('resultadosContainer');
+            resultadosContainer.innerHTML = '';
+
+            resultados.forEach((r, index) => {
+                const estadoClase = r.acierto ? 'correcta' : (r.respuesta_usuario === 'No respondida' ? 'no-respondida' : 'incorrecta');
+                const estadoTexto = r.acierto ? '✓ Correcta' : (r.respuesta_usuario === 'No respondida' ? '○ No respondida' : '✗ Incorrecta');
+                
+                const resultadoHTML = `
+                    <div class="resultado">
+                        <p><strong>${index + 1}. ${r.pregunta}</strong></p>
+                        <p><em>${r.conector}</em></p>
+                        
+                        <p>Tu respuesta: 
+                            <span class="${estadoClase}">${r.respuesta_usuario}</span>
+                        </p>
+                        
+                        ${!r.acierto && r.respuesta_usuario !== 'No respondida' ? 
+                            `<p>Respuesta correcta: <strong class="correcta">${r.respuesta_correcta}</strong></p>` : ''}
+                        
+                        ${r.respuesta_usuario === 'No respondida' ? 
+                            `<p>Respuesta correcta: <strong class="correcta">${r.respuesta_correcta}</strong></p>` : ''}
+                        
+                        <p>Estado: 
+                            <strong class="${estadoClase}">${estadoTexto}</strong>
+                        </p>
+                    </div>
+                `;
+                
+                resultadosContainer.innerHTML += resultadoHTML;
+            });
+
+            // Configurar botones de descarga
+            function descargarResultados() {
+                const contenido = `
+RESULTADOS DEL EXAMEN
+=====================
+
+Puntaje obtenido: ${puntaje} / ${total}
+Porcentaje: ${porcentaje}%
+Preguntas respondidas: ${respondidas} / ${total}
+Preguntas sin responder: ${total - respondidas}
+Estado: ${porcentaje >= 70 ? 'APROBADO' : 'REPROBADO'}
+
+DETALLE DE RESULTADOS:
+=====================
+
+${resultados.map((r, index) => `
+${index + 1}. ${r.pregunta}
+${r.conector ? 'Conector: ' + r.conector : ''}
+
+Tu respuesta: ${r.respuesta_usuario}
+Respuesta correcta: ${r.respuesta_correcta}
+Estado: ${r.acierto ? 'CORRECTA' : (r.respuesta_usuario === 'No respondida' ? 'NO RESPONDIDA' : 'INCORRECTA')}
+${r.acierto ? '' : '✗ Incorrecta'}
+----------------------------------------
+`).join('')}
+
+Fecha: ${new Date().toLocaleString()}
+Usuario: ${localStorage.getItem('usuario') || 'No especificado'}
+                `.trim();
+
+                const blob = new Blob([contenido], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `resultados-examen-${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            document.getElementById('btnDescargar').addEventListener('click', descargarResultados);
+            document.getElementById('btnDescargarAbajo').addEventListener('click', descargarResultados);
+
+            // Limpiar localStorage después de mostrar resultados (opcional)
+            // localStorage.removeItem('resultadosExamen');
+        });
+    </script>
+</body>
+</html>

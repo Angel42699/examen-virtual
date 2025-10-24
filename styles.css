@@ -1,0 +1,347 @@
+/* Estilos generales */
+body {
+    background-image: url("images/fondo.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+.container {
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    max-width: 1000px;
+    margin: 20px auto;
+}
+
+/* Estilos para login */
+.login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+}
+
+.login-container form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.login-container label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+.login-container input[type="text"],
+.login-container input[type="password"] {
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.login-container button {
+    padding: 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.login-container button:hover {
+    background-color: #45a049;
+}
+
+.error {
+    color: red;
+    text-align: center;
+    margin-top: 15px;
+}
+
+.usuarios-demo {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #007bff;
+}
+
+.usuarios-demo h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.usuarios-demo p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+/* Estilos para el examen */
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.pregunta { 
+    margin-bottom: 30px; 
+    padding: 20px; 
+    border: 1px solid #ddd; 
+    border-radius: 10px;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.pregunta:hover {
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+}
+
+.opcion { 
+    margin: 10px 0; 
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.opcion:hover {
+    background-color: #f0f0f0;
+}
+
+.opcion input[type="radio"] {
+    margin-right: 10px;
+}
+
+.navegacion {
+    display: flex;
+    justify-content: space-between;
+    margin: 30px 0;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+}
+
+.btn {
+    padding: 12px 25px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-anterior {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-siguiente {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-finalizar {
+    background-color: #28a745;
+    color: white;
+    font-weight: bold;
+}
+
+.btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.btn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.progreso {
+    text-align: center;
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.contador-preguntas {
+    text-align: center;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.auto-save {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: #28a745;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.auto-save.mostrar {
+    opacity: 1;
+}
+
+.pregunta-respondida {
+    border-left: 4px solid #28a745;
+}
+
+.pregunta-sin-responder {
+    border-left: 4px solid #dc3545;
+}
+
+/* Estilos para resultados */
+.resultado { 
+    margin-bottom: 20px; 
+    padding: 20px; 
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: white;
+}
+
+.correcta { color: green; font-weight: bold; }
+.incorrecta { color: red; font-weight: bold; }
+.no-respondida { color: gray; font-style: italic; }
+
+.puntaje {
+    font-size: 24px;
+    padding: 20px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.volver-btn {
+    padding: 12px 25px;
+    background-color: #2196F3;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    display: inline-block;
+    margin: 10px;
+}
+
+.volver-btn:hover {
+    background-color: #0b7dda;
+}
+
+.resumen {
+    background-color: #e8f5e8;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.btn-container {
+    text-align: center;
+    margin: 20px 0;
+}
+
+/* Estilos para el lector de voz */
+.lector-voz {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+}
+
+.btn-lector {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.btn-lector:hover {
+    background-color: #138496;
+    transform: scale(1.05);
+}
+
+.btn-lector.leyendo {
+    background-color: #dc3545;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+
+.controles-lector {
+    position: absolute;
+    bottom: 70px;
+    left: 0;
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    width: 200px;
+    display: none;
+}
+
+.controles-lector.mostrar {
+    display: block;
+}
+
+.control-velocidad, .control-voz {
+    margin-bottom: 15px;
+}
+
+.control-velocidad label, .control-voz label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.control-velocidad select, .control-voz select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.texto-resaltado {
+    background-color: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: background-color 0.3s ease;
+}
+
+.pregunta-seleccionada-lectura {
+    border: 2px solid #007bff;
+    box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+}
